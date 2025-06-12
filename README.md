@@ -15,7 +15,7 @@
 
 **Kiala** is a cross-platform desktop AI assistant designed for comfortable and productive interaction with the powerful Gemini model. The project combines a Python backend on Flask and a modern web interface, packaged into one convenient desktop application.
 
-**[🌐 Visit Project Website]()**
+**[🌐 Visit Project Website](https://kiala-ai.vercel.app/)**
 
 </div>
 
