@@ -1,0 +1,6 @@
+Flask>=2.3.0
+python-dotenv>=1.0.0
+google-generativeai>=0.5.0
+pywebview>=4.6.0
+requests>=2.30.0
+PyQt6>=6.6.0 #If an error occurs, remove 6 and put 5

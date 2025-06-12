@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiala</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="dark-theme"> <!-- Dark theme by default -->
+    <div class="app-grok">
+        <aside class="sidebar-grok">
+            <div class="sidebar-header-grok"> <!-- You'll see the name Grock a lot, when I was making the visuals I tried to make it look exactly like Grock. -->
+                <button class="new-chat-btn" id="new-chat-btn-id">
+                    <i class="fas fa-plus"></i>
+                    <span>New chat</span>
+                </button>
+            </div>
+            <nav class="history-nav">
+                <p class="history-title">Recent</p>
+                <ul id="history-list-grok">
+                </ul>
+            </nav>
+            <div class="sidebar-footer-grok">
+                <button class="menu-grok-btn" data-tab="profile" title="User profile">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Profile</span>
+                </button>
+                <button class="menu-grok-btn" data-tab="settings" title="Application Settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </button>
+                 <button class="menu-grok-btn active-tab-grok" data-tab="chat" id="chat-menu-btn-internal" title="Return to chat">
+                    <i class="fas fa-comments"></i>
+                    <span>Chat</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content-grok"> <!-- Chat View -->
+            <div class="content-view active-view" id="chat-view">
+                <header class="chat-header-grok">
+                    <button id="sidebar-toggle-chat" class="sidebar-toggle-grok-btn" title="Open/Hide Panel">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="chat-title-grok" id="current-chat-title">Kiala</h1>
+                    <div class="chat-actions-grok">
+                        <button class="action-btn-grok" id="clear-current-chat-btn" title="Clear messages in the current chat"><i class="fas fa-eraser"></i></button>
+                        <button class="action-btn-grok" id="more-options-btn" title="Additional actions with chat"><i class="fas fa-ellipsis-v"></i></button>
+                        <div class="more-options-dropdown" id="more-options-dropdown-id">
+                             <button data-action="rename-chat"><i class="fas fa-pen"></i>Rename chat</button>
+                             <button data-action="delete-chat" class="danger-action"><i class="fas fa-trash-alt"></i>Delete chat</button>
+                        </div>
+                    </div>
+                </header>
+                <div class="chat-messages-grok" id="chat-messages-grok">
+                </div>
+                <div class="typing-indicator-grok" id="typing-indicator-grok">Kiala prints<span class="dot1">.</span><span class="dot2">.</span><span class="dot3">.</span>
+                </div>
+                <footer class="chat-input-area-grok">
+                    <div class="input-wrapper-grok">
+                        <button id="attach-file-btn" class="attach-btn-grok" title="Attach file (under development)">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <textarea id="message-input-grok" placeholder="Ask Kiala..." rows="1"></textarea>
+                        <button id="send-button-grok" class="send-btn-grok" title="Send (Enter)" disabled>
+                            <i class="fas fa-arrow-up"></i>
+                        </button>
+                    </div>
+                    <p class="disclaimer-grok">Kiala may provide inaccurate information. Always verify important data.</p>
+                </footer>
+            </div>
+
+            <!-- Settings View -->
+            <div class="content-view" id="settings-view">
+                <header class="chat-header-grok">
+                    <button id="sidebar-toggle-settings" class="sidebar-toggle-grok-btn" title="Open/Hide Panel">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="chat-title-grok">Settings</h1>
+                </header>
+                <div class="settings-profile-content">
+                    <div class="setting-item-grok">
+                        <label for="theme-select">Interface Theme</label>
+                        <select id="theme-select" class="settings-select-grok">
+                            <option value="grok-dark">Dark (Grok)</option> <!-- I told you that you will meet the name Grock more than once?)) -->
+                            <option value="grok-light">Light (Kiala Light)</option>
+                            <option value="system">Systemic</option> <!-- It works crookedly, the same white theme but just added for show -->
+                        </select>
+                    </div>
+                     <div class="setting-item-grok">
+                        <label for="dense-mode-toggle">Compact message mode</label>
+                        <label class="switch-grok">
+                            <input type="checkbox" id="dense-mode-toggle">
+                            <span class="slider-grok round-grok"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item-grok">
+                        <label for="gemini-api-key-input">API Key Gemini</label>
+                        <div class="api-key-wrapper-grok">
+                            <input type="password" id="gemini-api-key-input" class="settings-input-grok" placeholder="Enter your Google AI API key">
+                            <button id="toggle-api-key-visibility" class="action-btn-grok" title="Show/hide key"><i class="fas fa-eye"></i></button>
+                            <button id="save-api-key-btn" class="settings-action-btn-grok">Save</button>
+                        </div>
+                    </div>
+                    <div class="setting-item-grok">
+                         <label>System Prompt (Kiala Manual)</label>
+                         <textarea id="system-prompt-input" class="settings-textarea-grok" rows="3" placeholder="For example: You are a friendly and slightly sarcastic AI assistant."></textarea>
+                    </div>
+                     <div class="setting-item-grok">
+                        <label></label>
+                        <button id="save-system-prompt-btn" class="settings-action-btn-grok">Save the instructions</button>
+                    </div>
+                    <div class="setting-item-grok">
+                        <label for="clear-history-all-btn">Clear ALL chat history</label>
+                        <button id="clear-history-all-btn" class="action-btn-grok danger-action" style="font-size:14px; padding:6px 10px;">Clear all</button>
+                    </div>
+                    <p style="margin-top:20px; color:var(--text-secondary);">Kiala-V.0.1A. Created with soul and diligence.</p>
+                </div>
+            </div>
+            
+            <!-- Profile View -->
+             <div class="content-view" id="profile-view">
+                <header class="chat-header-grok">
+                    <button id="sidebar-toggle-profile" class="sidebar-toggle-grok-btn" title="Open/Hide Panel">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="chat-title-grok">Profile</h1>
+                </header>
+                <div class="settings-profile-content">
+                    <div class="setting-item-grok user-avatar-setting">
+                        <label>User avatar</label>
+                        <div class="avatar-preview-grok" id="user-avatar-preview">YOU</div>
+                    </div>
+                    <div class="setting-item-grok" style="flex-direction:column; align-items:flex-start; gap:10px;">
+                        <label for="username-input">Initials for avatar (1-3 characters)</label> <!-- Why exactly three symbols? Why not? -->
+                        <input type="text" id="username-input" value="You" class="settings-input-grok" maxlength="3">
+                    </div>
+                     <div class="setting-item-grok">
+                        <label>Version Kiala</label>
+                        <span id="kiala-version-display">V.0.1A</span>
+                    </div>
+                     <div class="setting-item-grok">
+                        <label>Support the project</label>
+                        <a href="https://ko-fi.com/jacqquard" target="_blank" class="link-grok">Support Kiala 💷</a>
+                    </div>
+                    <p style="margin-top:20px; color:var(--text-secondary);">Manage profile and application data.</p>
+                    <button id="export-chats-btn" class="menu-grok-btn" style="width:auto; margin-top: 20px; background-color: var(--bg-secondary);"><i class="fas fa-file-export"></i>Export all chats</button> <!-- I'm a clumsy monkey, this feature is not implemented -->
+                    <label class="menu-grok-btn" for="import-chats-input" style="width:auto; margin-top: 10px; background-color: var(--bg-secondary); cursor:pointer;"><i class="fas fa-file-import"></i>Import chats<input type="file" id="import-chats-input" accept=".json" style="display:none;"> <!-- This doesn't work either -->
+                    </label>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal window for renaming chat, does not work as it should -->
+    <div id="rename-chat-modal" class="modal-grok">
+        <div class="modal-content-grok">
+            <span class="close-modal-grok" title="Close">×</span>
+            <h2>Rename chat</h2>
+            <input type="text" id="rename-chat-input" placeholder="New chat name" maxlength="100">
+            <div class="modal-actions-grok">
+                <button id="cancel-rename-chat-btn" class="modal-btn-secondary">Cancel</button>
+                <button id="confirm-rename-chat-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- General modal window for confirmations -->
+    <div id="confirmation-modal" class="modal-grok">
+        <div class="modal-content-grok">
+            <span class="close-modal-grok" title="Close">×</span>
+            <h2 id="confirmation-modal-title">Confirmation</h2>
+            <p id="confirmation-modal-text">Are you sure?</p>
+            <div class="modal-actions-grok">
+                <button id="confirmation-modal-cancel-btn" class="modal-btn-secondary">Cancel</button>
+                <button id="confirmation-modal-confirm-btn" class="modal-btn-danger">Confirm</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast notifications -->
+    <div id="toast-container-grok" class="toast-container-grok">
+        <!-- Yes, it's empty, questions? -->
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
