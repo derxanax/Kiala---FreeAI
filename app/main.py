@@ -1,4 +1,6 @@
 import os
+# Ensure fallback software rendering to silence nouveau driver errors
+os.environ.setdefault('QT_QUICK_BACKEND', 'software')
 import sys
 import json
 import threading
@@ -85,6 +87,14 @@ def run_flask_app():
         if window:
             window.evaluate_js(f"alert('Failed to start internal web server: {str(e).replace('\"', '')}');")
 
+def is_qt_available() -> bool:
+    """Return True if Qt backend is importable via qtpy."""
+    try:
+        import qtpy  # noqa: F401
+        return True
+    except Exception:
+        return False
+
 # Create the GUI using webview
 def create_gui():
     global window
@@ -115,7 +125,14 @@ def create_gui():
     
     window.events.closed += on_window_closed
     
-    webview.start(debug=False, gui='qt') # debug=True for developer tools
+    gui_backend = 'qt' if is_qt_available() else 'gtk'
+    if gui_backend == 'gtk':
+        print("INFO: Qt backend unavailable, falling back to GTK.")
+    try:
+        webview.start(debug=False, gui=gui_backend)  # debug=True for developer tools
+    except Exception as e:
+        print(f"CRITICAL ERROR: Failed to start webview with backend '{gui_backend}'. {e}", file=sys.stderr)
+        sys.exit(1)
 
 def on_window_closed():
     print("The Kiala window was closed by the user.")

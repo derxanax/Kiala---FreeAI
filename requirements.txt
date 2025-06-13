@@ -4,3 +4,7 @@ google-generativeai>=0.5.0
 pywebview>=4.6.0
 requests>=2.30.0
 PyQt6>=6.6.0 #If an error occurs, remove 6 and put 5
+PySide6==6.9.1
+PySide6-Essentials==6.9.1
+PySide6-Addons==6.9.1
+qtpy>=2.4.3
