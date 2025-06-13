@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.idea/
+.vscode/
+.env
+.env.* 
+*/dist/
+*/node_modules/
+*/package-lock.json
+
+*/sessions/
+
