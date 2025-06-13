@@ -27,6 +27,9 @@ interface SendMessageRequest {
 let browserPage: Page | null = null;
 let browserInstance: Browser | null = null;
 let isPageReady = false;
+let jsonAssistant: string | null = null;
+let capturedChatId: string | null = null;
+let capturedChatTitle: string | null = null;
 
 async function setupPuppeteer(): Promise<Browser> {
   puppeteer.use(StealthPlugin());
@@ -118,10 +121,12 @@ async function saveSession(page: Page): Promise<void> {
   }
 }
 
-async function sendMessageToQwen(page: Page, message: string): Promise<{ success: boolean, response?: string }> {
+async function sendMessageToQwen(page: Page, message: string): Promise<{ success: boolean, response?: string, qwenId?: string, qwenTitle?: string }> {
   try {
     let completedResponseReceived = false;
-    let jsonAssistant: string | null = null;
+    jsonAssistant = null;
+    capturedChatId = null;
+    capturedChatTitle = null;
     
     page.on('response', async (response) => {
       const url = response.url();
@@ -132,8 +137,14 @@ async function sendMessageToQwen(page: Page, message: string): Promise<{ success
       if (url.includes('/api/v1/chats/') && response.request().method() === 'POST') {
         try {
           const data = await response.json();
-          // Try to extract assistant message from standard structure
+          // Try to extract assistant message, id and title from standard structure
           if (data && data.chat && data.chat.history && data.chat.history.currentId) {
+            if (!capturedChatId) {
+              capturedChatId = data.chat?.id || data.id || null;
+            }
+            if (!capturedChatTitle) {
+              capturedChatTitle = data.chat?.title || data.title || (data.chat?.summary?.title ?? null);
+            }
             const currentId = data.chat.history.currentId;
             const msgObj = data.chat.history.messages[currentId];
             if (msgObj && msgObj.role === 'assistant') {
@@ -316,7 +327,7 @@ async function sendMessageToQwen(page: Page, message: string): Promise<{ success
       responseText = jsonAssistant;
     }
     
-    return { success: true, response: responseText };
+    return { success: true, response: responseText, qwenId: capturedChatId || undefined, qwenTitle: capturedChatTitle || undefined };
   } catch (error) {
     console.error('Error during message exchange:', error);
     return { success: false };
@@ -335,6 +346,20 @@ async function setupBrowserAndPage(): Promise<void> {
     await browserPage.setDefaultNavigationTimeout(60000);
 
     await browserPage.goto(QWEN_URL, { waitUntil: 'domcontentloaded' });
+
+    // Disable potential beforeunload warnings and auto-accept dialogs
+    browserPage.on('dialog', async (dialog) => {
+      try {
+        await dialog.accept();
+      } catch {}
+    });
+
+    await browserPage.evaluate(() => {
+      window.onbeforeunload = null;
+      window.addEventListener('beforeunload', (e) => {
+        e.stopImmediatePropagation();
+      }, { capture: true });
+    });
 
     await browserPage.waitForSelector('#chat-input', { timeout: 30000 });
 
@@ -417,6 +442,8 @@ async function setupApiServer(): Promise<void> {
           success: true,
           message: 'Message sent and response received',
           response: result.response || '',
+          qwenId: result.qwenId || null,
+          qwenTitle: result.qwenTitle || null,
           timestamp: new Date().toISOString()
         });
       } else {
@@ -458,6 +485,30 @@ async function setupApiServer(): Promise<void> {
     } catch (error) {
       console.error('Error creating new chat:', error);
       res.status(500).json({ success: false, error: 'Failed to create new chat' });
+    }
+  });
+
+  // Endpoint to switch chat by Qwen ID
+  app.post('/api/switch-chat', async (req, res) => {
+    const { qwenId } = req.body;
+    if (!qwenId) {
+      return res.status(400).json({ success: false, error: 'qwenId is required' });
+    }
+    if (!isPageReady || !browserPage) {
+      return res.status(503).json({ success: false, error: 'Browser is not ready yet' });
+    }
+    try {
+      const targetUrl = `${QWEN_URL}c/${qwenId}`;
+      await browserPage.goto(targetUrl, { waitUntil: 'networkidle2' });
+      await browserPage.waitForSelector('#chat-input', { timeout: 10000 }).catch(() => {});
+
+      // Disable beforeunload prompt after navigation
+      await browserPage.evaluate(() => { window.onbeforeunload = null; });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error switching chat:', error);
+      res.status(500).json({ success: false, error: 'Failed to switch chat' });
     }
   });
 

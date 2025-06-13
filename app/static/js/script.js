@@ -130,7 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }],
             isActive: true,
             systemInstruction: null,
-            lastActivity: Date.now()
+            lastActivity: Date.now(),
+            qwenId: null
         }];
         activeChatId = chatHistory[0].id;
         saveChatHistoryToLS();
@@ -318,7 +319,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 botResponseText = await fetchGeminiResponse(messageText, historyForApi, apiKeyToUse, systemPromptToUse);
             } else if (provider === 'qwen') {
-                botResponseText = await fetchQwenResponse(messageText);
+                const qwenData = await fetchQwenResponse(messageText);
+                botResponseText = qwenData.response || ' ';
+                if (qwenData.qwenId && !currentChat.qwenId) {
+                    currentChat.qwenId = qwenData.qwenId;
+                }
+                if (qwenData.qwenTitle && currentChat.title.startsWith('New chat')) {
+                    currentChat.title = qwenData.qwenTitle;
+                    renderHistoryList();
+                    if (currentChat.id === activeChatId && currentChatTitle) currentChatTitle.textContent = currentChat.title;
+                }
             } else {
                 throw new Error(`Unsupported provider: ${provider}`);
             }
@@ -382,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error(errorData.error || `The Qwen server responded with an error: ${response.status}`);
         }
         const data = await response.json();
-        return data.response || ' '; // Qwen returns field 'response'
+        return data; // {response,qwenId,qwenTitle}
     }
     
     function addMessageToChat(chatId, sender, text, prompts = null) {
@@ -399,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             chat.messages.push(message);
 
-            if (chat.title.startsWith("New chat") && sender === 'user' && chat.messages.filter(m => m.sender === 'user').length === 1) {
+            if (userSettings.provider !== 'qwen' && chat.title.startsWith("New chat") && sender === 'user' && chat.messages.filter(m => m.sender === 'user').length === 1) {
                 const newTitle = text.substring(0, 35) + (text.length > 35 ? "..." : "");
                 if (newTitle.trim()) { 
                     chat.title = newTitle;
@@ -582,7 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSendButtonState(); 
     }
     
-    function activateChat(chatId) {
+    async function activateChat(chatId) {
         if (!chatId) return;
 
         const newActiveChat = chatHistory.find(ch => ch.id === chatId);
@@ -603,6 +613,25 @@ document.addEventListener('DOMContentLoaded', () => {
         
         saveChatHistoryToLS(); 
         renderHistoryList(); 
+        if (userSettings.provider === 'qwen' && newActiveChat) {
+            try {
+                if (newActiveChat.qwenId) {
+                    showLoader();
+                    await fetch('http://localhost:3700/api/switch-chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ qwenId: newActiveChat.qwenId })
+                    });
+                    hideLoader();
+                } else {
+                    showLoader();
+                    await fetch('http://localhost:3700/api/new-chat', { method: 'POST' });
+                    hideLoader();
+                }
+            } catch (e) {
+                console.error('Failed to switch/create Qwen chat:', e);
+            }
+        }
         renderCurrentChatMessages(); 
         
         if (messageInput) messageInput.focus();
@@ -631,7 +660,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }],
             isActive: true, 
             systemInstruction: null, 
-            lastActivity: newChatId
+            lastActivity: newChatId,
+            qwenId: null
         };
 
         const currentActive = chatHistory.find(ch => ch.isActive);
@@ -639,6 +669,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         chatHistory.unshift(newChat); 
         activeChatId = newChatId;
+        
+        // If Qwen provider create remote chat immediately
+        if (userSettings.provider === 'qwen') {
+            showLoader();
+            fetch('http://localhost:3700/api/new-chat', { method: 'POST' })
+               .catch(err => console.error('Failed to create Qwen remote chat:', err))
+               .finally(() => hideLoader());
+        }
         
         saveChatHistoryToLS();
         renderHistoryList();
@@ -1158,6 +1196,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    const loaderOverlay = document.getElementById('loader-overlay');
+    function showLoader() { if (loaderOverlay) loaderOverlay.classList.add('visible'); }
+    function hideLoader() { if (loaderOverlay) loaderOverlay.classList.remove('visible'); }
 
     initializeKiala();
 });

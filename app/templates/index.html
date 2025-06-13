@@ -206,7 +206,11 @@
         <!-- Yes, it's empty, questions? -->
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Loader overlay -->
+    <div id="loader-overlay" class="loader-overlay">
+        <div class="loader-dots"><span></span><span></span><span></span></div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
