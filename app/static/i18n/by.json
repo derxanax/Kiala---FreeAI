@@ -1,0 +1,16 @@
+{
+  "settings.title": "Налады",
+  "settings.theme": "Тэма інтэрфейсу",
+  "settings.denseMode": "Кампактны рэжым паведамленняў",
+  "settings.language": "Мова",
+  "sidebar.newChat": "Новы чат",
+  "sidebar.history": "Нядаўнія",
+  "chat.placeholder": "Спытайце Kiala...",
+  "chat.send": "Адправіць",
+  "toast.saved": "Паспяхова захавана.",
+  "toast.deleted": "Паспяхова выдалена.",
+  "toast.error": "Памылка аперацыі.",
+  "modal.confirmTitle": "Пацверджанне",
+  "modal.confirmYes": "Пацвердзіць",
+  "modal.confirmNo": "Скасаваць"
+} 

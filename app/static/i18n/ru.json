@@ -1,0 +1,16 @@
+{
+  "settings.title": "Настройки",
+  "settings.theme": "Тема интерфейса",
+  "settings.denseMode": "Компактный режим сообщений",
+  "settings.language": "Язык",
+  "sidebar.newChat": "Новый чат",
+  "sidebar.history": "Недавние",
+  "chat.placeholder": "Спросите Kiala...",
+  "chat.send": "Отправить",
+  "toast.saved": "Успешно сохранено.",
+  "toast.deleted": "Успешно удалено.",
+  "toast.error": "Ошибка операции.",
+  "modal.confirmTitle": "Подтверждение",
+  "modal.confirmYes": "Подтвердить",
+  "modal.confirmNo": "Отмена"
+} 

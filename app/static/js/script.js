@@ -63,7 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
         geminiApiKey: '',
         globalSystemPrompt: "You are a polite and friendly assistant to Kiala, who is happy to answer questions asked.",
         userAvatarInitials: 'You',
-        provider: 'gemini'
+        provider: 'gemini',
+        language: 'en'
     };
     let isGeminiResponding = false;
     let currentConfirmationAction = null;
@@ -80,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem(LS_KIALA_HISTORY, JSON.stringify(chatHistory));
         } catch (e) {
             console.error("Error saving chat history to localStorage:", e);
-            showToast("Failed to save chat history. Storage may be full.", "error");
+            showToast(t("toast.error"), "error");
         }
     }
 
@@ -134,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem(LS_KIALA_SETTINGS, JSON.stringify(userSettings));
         } catch (e) {
             console.error("Error saving settings to localStorage:", e);
-            showToast("Failed to save settings.", "error");
+            showToast(t("toast.error"), "error");
         }
     }
 
@@ -166,6 +167,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userAvatarPreview) userAvatarPreview.textContent = getAvatarInitials(userSettings.userAvatarInitials || 'You');
 
         if (providerSelect) providerSelect.value = userSettings.provider || 'gemini';
+
+        // Language
+        currentLanguage = userSettings.language || 'en';
+        if (languageDropdown) {
+            const currentFlag = languageDropdown.querySelector('.language-current img');
+            const currentText = languageDropdown.querySelector('.language-current span');
+            if (currentFlag && currentText) {
+                currentFlag.src = `/static/img/flags/${currentLanguage}.svg`;
+                currentText.textContent = currentLanguage === 'ru' ? 'Русский' : currentLanguage === 'by' ? 'Беларуская' : 'English';
+            }
+        }
     }
 
     function setTheme(themeName) {
@@ -1032,10 +1044,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function initializeKiala() {
+    async function initializeKiala() {
         console.log("Kiala-V.0.1A: Initializing the interface...");
+        // Load language first
+        currentLanguage = localStorage.getItem('kiala_language') || 'en';
+        userSettings.language = currentLanguage;
+        await loadTranslations(currentLanguage);
         loadUserSettingsFromLS(); 
         loadChatHistoryFromLS();  
+        
+        applyTranslations();
         
         renderHistoryList();
         if (activeChatId) {
@@ -1060,6 +1078,80 @@ document.addEventListener('DOMContentLoaded', () => {
 
         showToast(`Kiala ${KIALA_VERSION} ready to work!`, "info", 2500);
         console.log("Kiala-V.0.1A: Initialization complete.");
+    }
+
+    // Internationalization (i18n)
+    let currentLanguage = 'en';
+    const translationsCache = {};
+
+    async function loadTranslations(lang) {
+        if (translationsCache[lang]) {
+            return translationsCache[lang];
+        }
+        try {
+            const resp = await fetch(`/static/i18n/${lang}.json`);
+            if (!resp.ok) throw new Error(`Failed to load translations for ${lang}`);
+            const data = await resp.json();
+            translationsCache[lang] = data;
+            return data;
+        } catch (e) {
+            console.error("i18n load error:", e);
+            return {};
+        }
+    }
+
+    function t(key) {
+        const dict = translationsCache[currentLanguage] || {};
+        return dict[key] || key;
+    }
+
+    function applyTranslations() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const k = el.getAttribute('data-i18n');
+            if (k) el.textContent = t(k);
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const k = el.getAttribute('data-i18n-placeholder');
+            if (k) el.setAttribute('placeholder', t(k));
+        });
+    }
+
+    // Language dropdown interactions
+    if (languageDropdown) {
+        const currentBtn = languageDropdown.querySelector('.language-current');
+        const optionsList = languageDropdown.querySelector('.language-options');
+
+        if (currentBtn) {
+            currentBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                languageDropdown.classList.toggle('open');
+            });
+        }
+        if (optionsList) {
+            optionsList.querySelectorAll('li').forEach(li => {
+                li.addEventListener('click', async () => {
+                    const selLang = li.getAttribute('data-lang');
+                    languageDropdown.classList.remove('open');
+                    if (!selLang || selLang === currentLanguage) return;
+                    currentLanguage = selLang;
+                    userSettings.language = selLang;
+                    saveUserSettingsToLS();
+                    localStorage.setItem('kiala_language', selLang);
+                    const flagImg = languageDropdown.querySelector('.language-current img');
+                    const flagText = languageDropdown.querySelector('.language-current span');
+                    if (flagImg) flagImg.src = `/static/img/flags/${selLang}.svg`;
+                    if (flagText) flagText.textContent = li.textContent.trim().split(' ').slice(1).join(' ');
+                    await loadTranslations(selLang);
+                    applyTranslations();
+                });
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!languageDropdown.contains(e.target)) {
+                languageDropdown.classList.remove('open');
+            }
+        });
     }
 
     initializeKiala();

@@ -1,0 +1,16 @@
+{
+  "settings.title": "Settings",
+  "settings.theme": "Interface Theme",
+  "settings.denseMode": "Compact message mode",
+  "settings.language": "Language",
+  "sidebar.newChat": "New chat",
+  "sidebar.history": "Recent",
+  "chat.placeholder": "Ask Kiala...",
+  "chat.send": "Send",
+  "toast.saved": "Saved successfully.",
+  "toast.deleted": "Deleted successfully.",
+  "toast.error": "Operation failed.",
+  "modal.confirmTitle": "Confirmation",
+  "modal.confirmYes": "Confirm",
+  "modal.confirmNo": "Cancel"
+} 

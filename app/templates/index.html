@@ -13,11 +13,11 @@
             <div class="sidebar-header-grok"> <!-- You'll see the name Grock a lot, when I was making the visuals I tried to make it look exactly like Grock. -->
                 <button class="new-chat-btn" id="new-chat-btn-id">
                     <i class="fas fa-plus"></i>
-                    <span>New chat</span>
+                    <span data-i18n="sidebar.newChat">New chat</span>
                 </button>
             </div>
             <nav class="history-nav">
-                <p class="history-title">Recent</p>
+                <p class="history-title" data-i18n="sidebar.history">Recent</p>
                 <ul id="history-list-grok">
                 </ul>
             </nav>
@@ -62,7 +62,7 @@
                         <button id="attach-file-btn" class="attach-btn-grok" title="Attach file (under development)">
                             <i class="fas fa-paperclip"></i>
                         </button>
-                        <textarea id="message-input-grok" placeholder="Ask Kiala..." rows="1"></textarea>
+                        <textarea id="message-input-grok" placeholder="Ask Kiala..." rows="1" data-i18n-placeholder="chat.placeholder"></textarea>
                         <button id="send-button-grok" class="send-btn-grok" title="Send (Enter)" disabled>
                             <i class="fas fa-arrow-up"></i>
                         </button>
@@ -77,11 +77,11 @@
                     <button id="sidebar-toggle-settings" class="sidebar-toggle-grok-btn" title="Open/Hide Panel">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <h1 class="chat-title-grok">Settings</h1>
+                    <h1 class="chat-title-grok" data-i18n="settings.title">Settings</h1>
                 </header>
                 <div class="settings-profile-content">
                     <div class="setting-item-grok">
-                        <label for="theme-select">Interface Theme</label>
+                        <label for="theme-select" data-i18n="settings.theme">Interface Theme</label>
                         <select id="theme-select" class="settings-select-grok">
                             <option value="grok-dark">Dark (Grok)</option> <!-- I told you that you will meet the name Grock more than once?)) -->
                             <option value="grok-light">Light (Kiala Light)</option>
@@ -89,7 +89,7 @@
                         </select>
                     </div>
                      <div class="setting-item-grok">
-                        <label for="dense-mode-toggle">Compact message mode</label>
+                        <label for="dense-mode-toggle" data-i18n="settings.denseMode">Compact message mode</label>
                         <label class="switch-grok">
                             <input type="checkbox" id="dense-mode-toggle">
                             <span class="slider-grok round-grok"></span>
@@ -121,6 +121,21 @@
                             <option value="gemini">Gemini</option>
                             <option value="qwen">Qwen (free, unstable)</option>
                         </select>
+                    </div>
+                    <div class="setting-item-grok">
+                        <label data-i18n="settings.language">Language</label>
+                        <div id="language-select" class="language-dropdown settings-select-grok" tabindex="0">
+                            <div class="language-current">
+                                <img src="{{ url_for('static', filename='img/flags/en.svg') }}" class="flag-icon" alt="EN">
+                                <span>English</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <ul class="language-options">
+                                <li data-lang="en"><img src="{{ url_for('static', filename='img/flags/en.svg') }}" class="flag-icon" alt="EN"> English</li>
+                                <li data-lang="ru"><img src="{{ url_for('static', filename='img/flags/ru.svg') }}" class="flag-icon" alt="RU"> Русский</li>
+                                <li data-lang="by"><img src="{{ url_for('static', filename='img/flags/by.svg') }}" class="flag-icon" alt="BY"> Беларуская</li>
+                            </ul>
+                        </div>
                     </div>
                     <p style="margin-top:20px; color:var(--text-secondary);">Kiala-V.0.1A. Created with soul and diligence.</p>
                 </div>
