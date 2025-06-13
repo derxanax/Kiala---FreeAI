@@ -1,11 +1,46 @@
 import os
 # Ensure fallback software rendering to silence nouveau driver errors
 os.environ.setdefault('QT_QUICK_BACKEND', 'software')
+
 import sys
 import json
 import threading
+import logging
+import time
+from flask import Flask, render_template, request, jsonify, Response, g
+
+
+def is_qt_available() -> bool:
+    """Return True if Qt backend is importable via qtpy without heavy submodules."""
+    try:
+        import importlib
+        return importlib.util.find_spec('qtpy') is not None
+    except Exception:
+        return False
+
+def detect_gui_backend() -> str:
+    """Return the best available gui backend for pywebview ('qt', 'gtk', 'tk')."""
+    # Prefer Qt if PySide6 is available
+    try:
+        import importlib
+        if importlib.util.find_spec('PySide6.QtWidgets') is not None:
+            return 'qt'
+    except Exception:
+        pass
+    # Try GTK3 via pygobject
+    try:
+        if importlib.util.find_spec('gi.repository.Gtk') is not None:
+            return 'gtk'
+    except Exception:
+        pass
+    # Fallback to tkinter backend
+    return 'tk'
+
+GUI_BACKEND = detect_gui_backend()
+# Expose to pywebview
+os.environ.setdefault('PYWEBVIEW_GUI', GUI_BACKEND)
+
 import webview
-from flask import Flask, render_template, request, jsonify, Response
 from app.core.gemini_client import get_gemini_response_sync
 
 if getattr(sys, 'frozen', False):
@@ -23,7 +58,35 @@ app.config['SECRET_KEY'] = os.urandom(32)
 flask_server_url = "http://127.0.0.1:5175"
 window = None
 
-# Let's make sure Flask and webview are running in the same thread
+# Configure logging
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format='%(asctime)s %(levelname)s [API] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger('kiala-api')
+
+# --- Request logging -------------------------------------------------------
+@app.before_request
+def start_timer():
+    g._start_time = time.perf_counter()
+
+@app.after_request
+def log_request(response):
+    try:
+        duration_ms = (time.perf_counter() - getattr(g, '_start_time', time.perf_counter())) * 1000
+        method = request.method
+        path = request.path
+        status = response.status_code
+        body_json = request.get_json(silent=True) if request.is_json else None
+        body_excerpt = str(body_json)[:120] if body_json else ''
+        logger.info(f"{method} {path} {status} ({duration_ms:.0f} ms) body={body_excerpt}")
+    except Exception:
+        # Never break response on logging failure
+        pass
+    return response
+
 @app.route('/')
 def index():
     try:
@@ -87,14 +150,6 @@ def run_flask_app():
         if window:
             window.evaluate_js(f"alert('Failed to start internal web server: {str(e).replace('\"', '')}');")
 
-def is_qt_available() -> bool:
-    """Return True if Qt backend is importable via qtpy."""
-    try:
-        import qtpy  # noqa: F401
-        return True
-    except Exception:
-        return False
-
 # Create the GUI using webview
 def create_gui():
     global window
@@ -125,13 +180,10 @@ def create_gui():
     
     window.events.closed += on_window_closed
     
-    gui_backend = 'qt' if is_qt_available() else 'gtk'
-    if gui_backend == 'gtk':
-        print("INFO: Qt backend unavailable, falling back to GTK.")
     try:
-        webview.start(debug=False, gui=gui_backend)  # debug=True for developer tools
+        webview.start(debug=False, gui=GUI_BACKEND)  # debug=True for developer tools
     except Exception as e:
-        print(f"CRITICAL ERROR: Failed to start webview with backend '{gui_backend}'. {e}", file=sys.stderr)
+        print(f"CRITICAL ERROR: Failed to start webview with backend '{GUI_BACKEND}'. {e}", file=sys.stderr)
         sys.exit(1)
 
 def on_window_closed():

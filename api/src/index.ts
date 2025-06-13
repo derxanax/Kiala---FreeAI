@@ -6,6 +6,8 @@ import path from 'path';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+// @ts-ignore
+import morgan from 'morgan';
 
 const QWEN_URL = 'https://chat.qwen.ai/';
 const SESSION_DIR = path.join(__dirname, '..', 'sessions');
@@ -119,13 +121,34 @@ async function saveSession(page: Page): Promise<void> {
 async function sendMessageToQwen(page: Page, message: string): Promise<{ success: boolean, response?: string }> {
   try {
     let completedResponseReceived = false;
-    let aiResponseText = "";
+    let jsonAssistant: string | null = null;
     
-    page.on('response', async response => {
+    page.on('response', async (response) => {
       const url = response.url();
       if (url.includes('/api/chat/completed')) {
         completedResponseReceived = true;
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((r) => setTimeout(r, 300));
+      }
+      if (url.includes('/api/v1/chats/') && response.request().method() === 'POST') {
+        try {
+          const data = await response.json();
+          // Try to extract assistant message from standard structure
+          if (data && data.chat && data.chat.history && data.chat.history.currentId) {
+            const currentId = data.chat.history.currentId;
+            const msgObj = data.chat.history.messages[currentId];
+            if (msgObj && msgObj.role === 'assistant') {
+              if (msgObj.content_list && msgObj.content_list.length > 0) {
+                jsonAssistant = msgObj.content_list[0].content;
+                completedResponseReceived = true;
+              } else if (msgObj.content) {
+                jsonAssistant = msgObj.content;
+                completedResponseReceived = true;
+              }
+            }
+          }
+        } catch (e) {
+          // ignore parsing errors
+        }
       }
     });
 
@@ -180,15 +203,25 @@ async function sendMessageToQwen(page: Page, message: string): Promise<{ success
     await page.waitForSelector(sendButtonSelector, { visible: true, timeout: 5000 });
     await page.click(sendButtonSelector);
 
-    const MAX_WAIT_TIME = 60000;
+    const preMessageCount = await page.evaluate(() => {
+      return document.querySelectorAll('p[data-spm-anchor-id]').length;
+    });
+
+    const MAX_WAIT_TIME = 45000;
     const startTime = Date.now();
-    
-    while (!completedResponseReceived && (Date.now() - startTime) < MAX_WAIT_TIME) {
-      await new Promise(resolve => setTimeout(resolve, 500));
+    const POLL_INTERVAL = 300;
+
+    while ((Date.now() - startTime) < MAX_WAIT_TIME) {
+      if (completedResponseReceived) break;
+      const currentCount = await page.evaluate(() => document.querySelectorAll('p[data-spm-anchor-id]').length);
+      if (currentCount > preMessageCount) {
+        break;
+      }
+      await new Promise(res => setTimeout(res, POLL_INTERVAL));
     }
     
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
+    await new Promise(resolve => setTimeout(resolve, 200));
+
     await page.evaluate(() => {
       try {
         const thinkingBtn = document.querySelector('button.chat-input-feature-btn.active');
@@ -223,60 +256,65 @@ async function sendMessageToQwen(page: Page, message: string): Promise<{ success
       } catch (error) {}
     });
 
-    const responseText = await page.evaluate(() => {
-      function cleanResponseText(text: string | null): string {
-        if (!text) return '';
-        
-        let cleanText = text;
-        
-        const serviceWords = ['Copy', 'Ask', 'Explain', 'Share', 'Копировать', 'Спросить', 'Объяснить', 'Поделиться'];
-        
-        for (const word of serviceWords) {
-          const regex = new RegExp(`\\s*${word}\\s*$`, 'i');
-          cleanText = cleanText.replace(regex, '');
+    let responseText: string = '';
+    if (!jsonAssistant) {
+      responseText = await page.evaluate(() => {
+        function cleanResponseText(text: string | null): string {
+          if (!text) return '';
+          
+          let cleanText = text;
+          
+          const serviceWords = ['Copy', 'Ask', 'Explain', 'Share', 'Копировать', 'Спросить', 'Объяснить', 'Поделиться'];
+          
+          for (const word of serviceWords) {
+            const regex = new RegExp(`\\s*${word}\\s*$`, 'i');
+            cleanText = cleanText.replace(regex, '');
+          }
+          
+          cleanText = cleanText.replace(/\s*(Copy|Ask|Explain|Share)\s+(Copy|Ask|Explain|Share)(\s+(Copy|Ask|Explain|Share))?\s*$/gi, '');
+          
+          for (let i = 0; i < 3; i++) {
+            cleanText = cleanText
+              .replace(/\s+(Copy|Ask|Explain|Share)\s*$/gi, '')
+              .replace(/\s+(Копировать|Спросить|Объяснить|Поделиться)\s*$/gi, '');
+          }
+          
+          cleanText = cleanText.replace(/\s+$/g, '');
+          cleanText = cleanText.replace(/\s{2,}/g, ' ');
+          
+          return cleanText.trim();
         }
         
-        cleanText = cleanText.replace(/\s*(Copy|Ask|Explain|Share)\s+(Copy|Ask|Explain|Share)(\s+(Copy|Ask|Explain|Share))?\s*$/gi, '');
-        
-        for (let i = 0; i < 3; i++) {
-          cleanText = cleanText
-            .replace(/\s+(Copy|Ask|Explain|Share)\s*$/gi, '')
-            .replace(/\s+(Копировать|Спросить|Объяснить|Поделиться)\s*$/gi, '');
+        const eventElements = document.querySelectorAll('div.event');
+        if (eventElements.length > 0) {
+          const lastEvent = eventElements[eventElements.length - 1];
+          const p = lastEvent.querySelector('p[data-spm-anchor-id]');
+          if (p && p.textContent) {
+            return cleanResponseText(p.textContent);
+          }
         }
-        
-        cleanText = cleanText.replace(/\s+$/g, '');
-        cleanText = cleanText.replace(/\s{2,}/g, ' ');
-        
-        return cleanText.trim();
-      }
-      
-      const eventElements = document.querySelectorAll('div.event');
-      if (eventElements.length > 0) {
-        const lastEvent = eventElements[eventElements.length - 1];
-        const p = lastEvent.querySelector('p[data-spm-anchor-id]');
-        if (p && p.textContent) {
-          return cleanResponseText(p.textContent);
+
+        const pElements = document.querySelectorAll('p[data-spm-anchor-id]');
+        if (pElements.length > 0) {
+          return cleanResponseText(pElements[pElements.length - 1].textContent);
         }
-      }
 
-      const pElements = document.querySelectorAll('p[data-spm-anchor-id]');
-      if (pElements.length > 0) {
-        return cleanResponseText(pElements[pElements.length - 1].textContent);
-      }
+        const responseContainers = document.querySelectorAll('[class*="response-content-container"], [id*="response-content-container"]');
+        if (responseContainers.length > 0) {
+          const lastContainer = responseContainers[responseContainers.length - 1];
+          return cleanResponseText(lastContainer.textContent);
+        }
 
-      const responseContainers = document.querySelectorAll('[class*="response-content-container"], [id*="response-content-container"]');
-      if (responseContainers.length > 0) {
-        const lastContainer = responseContainers[responseContainers.length - 1];
-        return cleanResponseText(lastContainer.textContent);
-      }
+        const markdownContainers = document.querySelectorAll('[class*="markdown-prose"]');
+        if (markdownContainers.length > 0) {
+          return cleanResponseText(markdownContainers[markdownContainers.length - 1].textContent);
+        }
 
-      const markdownContainers = document.querySelectorAll('[class*="markdown-prose"]');
-      if (markdownContainers.length > 0) {
-        return cleanResponseText(markdownContainers[markdownContainers.length - 1].textContent);
-      }
-
-      return '';
-    });
+        return '';
+      });
+    } else {
+      responseText = jsonAssistant;
+    }
     
     return { success: true, response: responseText };
   } catch (error) {
@@ -338,6 +376,16 @@ async function setupApiServer(): Promise<void> {
   app.use(bodyParser.json());
 
   app.use(express.static(path.join(__dirname, '..')));
+
+  // Morgan logging
+  morgan.token('body', (req: any) => {
+    try {
+      return JSON.stringify(req.body).slice(0, 120);
+    } catch {
+      return '';
+    }
+  });
+  app.use(morgan(':method :url :status :response-time ms :body'));
 
   app.get('/', (req, res) => {
     res.redirect('/test-client.html');
