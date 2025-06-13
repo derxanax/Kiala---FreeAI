@@ -5,6 +5,9 @@
   "settings.language": "Язык",
   "sidebar.newChat": "Новый чат",
   "sidebar.history": "Недавние",
+  "sidebar.profile": "Профиль",
+  "sidebar.settings": "Настройки",
+  "sidebar.chat": "Чат",
   "chat.placeholder": "Спросите Kiala...",
   "chat.send": "Отправить",
   "toast.saved": "Успешно сохранено.",
@@ -12,5 +15,17 @@
   "toast.error": "Ошибка операции.",
   "modal.confirmTitle": "Подтверждение",
   "modal.confirmYes": "Подтвердить",
-  "modal.confirmNo": "Отмена"
+  "modal.confirmNo": "Отмена",
+  "chat.rename": "Переименовать чат",
+  "chat.delete": "Удалить чат",
+  "chat.disclaimer": "Kiala может предоставить неточную информацию. Всегда проверяйте важные данные.",
+  "settings.apiKey": "API-ключ Gemini",
+  "settings.apiKeyPlaceholder": "Введите ваш Google AI API-ключ",
+  "settings.systemPrompt": "Системная инструкция (мануал Kiala)",
+  "settings.systemPromptPlaceholder": "Например: Вы дружелюбный и слегка саркастичный AI-ассистент.",
+  "settings.saveInstructions": "Сохранить инструкцию",
+  "settings.clearAllHistory": "Очистить ВСЮ историю чатов",
+  "settings.provider": "Провайдер",
+  "common.save": "Сохранить",
+  "common.clearAll": "Очистить всё"
 } 

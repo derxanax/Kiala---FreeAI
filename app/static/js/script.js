@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentChatTitle = document.getElementById('current-chat-title');
     const chatMenuButtonInternal = document.getElementById('chat-menu-btn-internal');
 
+    // Language selector dropdown
+    const languageDropdown = document.getElementById('language-select');
+
     const menuButtons = document.querySelectorAll('.menu-grok-btn');
     const contentViews = document.querySelectorAll('.content-view');
 
@@ -68,6 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     let isGeminiResponding = false;
     let currentConfirmationAction = null;
+
+    // Internationalization current language
+    let currentLanguage = 'en';
 
     const KIALA_VERSION = "0.1A";
 
@@ -1081,7 +1087,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Internationalization (i18n)
-    let currentLanguage = 'en';
     const translationsCache = {};
 
     async function loadTranslations(lang) {

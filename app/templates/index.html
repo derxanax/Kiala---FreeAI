@@ -24,15 +24,15 @@
             <div class="sidebar-footer-grok">
                 <button class="menu-grok-btn" data-tab="profile" title="User profile">
                     <i class="fas fa-user-circle"></i>
-                    <span>Profile</span>
+                    <span data-i18n="sidebar.profile">Profile</span>
                 </button>
                 <button class="menu-grok-btn" data-tab="settings" title="Application Settings">
                     <i class="fas fa-cog"></i>
-                    <span>Settings</span>
+                    <span data-i18n="sidebar.settings">Settings</span>
                 </button>
                  <button class="menu-grok-btn active-tab-grok" data-tab="chat" id="chat-menu-btn-internal" title="Return to chat">
                     <i class="fas fa-comments"></i>
-                    <span>Chat</span>
+                    <span data-i18n="sidebar.chat">Chat</span>
                 </button>
             </div>
         </aside>
@@ -48,8 +48,8 @@
                         <button class="action-btn-grok" id="clear-current-chat-btn" title="Clear messages in the current chat"><i class="fas fa-eraser"></i></button>
                         <button class="action-btn-grok" id="more-options-btn" title="Additional actions with chat"><i class="fas fa-ellipsis-v"></i></button>
                         <div class="more-options-dropdown" id="more-options-dropdown-id">
-                             <button data-action="rename-chat"><i class="fas fa-pen"></i>Rename chat</button>
-                             <button data-action="delete-chat" class="danger-action"><i class="fas fa-trash-alt"></i>Delete chat</button>
+                             <button data-action="rename-chat"><i class="fas fa-pen"></i><span data-i18n="chat.rename">Rename chat</span></button>
+                             <button data-action="delete-chat" class="danger-action"><i class="fas fa-trash-alt"></i><span data-i18n="chat.delete">Delete chat</span></button>
                         </div>
                     </div>
                 </header>
@@ -67,7 +67,7 @@
                             <i class="fas fa-arrow-up"></i>
                         </button>
                     </div>
-                    <p class="disclaimer-grok">Kiala may provide inaccurate information. Always verify important data.</p>
+                    <p class="disclaimer-grok" data-i18n="chat.disclaimer">Kiala may provide inaccurate information. Always verify important data.</p>
                 </footer>
             </div>
 
@@ -96,27 +96,27 @@
                         </label>
                     </div>
                     <div class="setting-item-grok">
-                        <label for="gemini-api-key-input">API Key Gemini</label>
+                        <label for="gemini-api-key-input" data-i18n="settings.apiKey">API Key Gemini</label>
                         <div class="api-key-wrapper-grok">
-                            <input type="password" id="gemini-api-key-input" class="settings-input-grok" placeholder="Enter your Google AI API key">
+                            <input type="password" id="gemini-api-key-input" class="settings-input-grok" placeholder="Enter your Google AI API key" data-i18n-placeholder="settings.apiKeyPlaceholder">
                             <button id="toggle-api-key-visibility" class="action-btn-grok" title="Show/hide key"><i class="fas fa-eye"></i></button>
-                            <button id="save-api-key-btn" class="settings-action-btn-grok">Save</button>
+                            <button id="save-api-key-btn" class="settings-action-btn-grok" data-i18n="common.save">Save</button>
                         </div>
                     </div>
                     <div class="setting-item-grok">
-                         <label>System Prompt (Kiala Manual)</label>
-                         <textarea id="system-prompt-input" class="settings-textarea-grok" rows="3" placeholder="For example: You are a friendly and slightly sarcastic AI assistant."></textarea>
+                         <label data-i18n="settings.systemPrompt">System Prompt (Kiala Manual)</label>
+                         <textarea id="system-prompt-input" class="settings-textarea-grok" rows="3" placeholder="For example: You are a friendly and slightly sarcastic AI assistant." data-i18n-placeholder="settings.systemPromptPlaceholder"></textarea>
                     </div>
                      <div class="setting-item-grok">
                         <label></label>
-                        <button id="save-system-prompt-btn" class="settings-action-btn-grok">Save the instructions</button>
+                        <button id="save-system-prompt-btn" class="settings-action-btn-grok" data-i18n="settings.saveInstructions">Save the instructions</button>
                     </div>
                     <div class="setting-item-grok">
-                        <label for="clear-history-all-btn">Clear ALL chat history</label>
-                        <button id="clear-history-all-btn" class="action-btn-grok danger-action" style="font-size:14px; padding:6px 10px;">Clear all</button>
+                        <label for="clear-history-all-btn" data-i18n="settings.clearAllHistory">Clear ALL chat history</label>
+                        <button id="clear-history-all-btn" class="action-btn-grok danger-action" style="font-size:14px; padding:6px 10px;" data-i18n="common.clearAll">Clear all</button>
                     </div>
                     <div class="setting-item-grok">
-                        <label for="provider-select">Provider</label>
+                        <label for="provider-select" data-i18n="settings.provider">Provider</label>
                         <select id="provider-select" class="settings-select-grok">
                             <option value="gemini">Gemini</option>
                             <option value="qwen">Qwen (free, unstable)</option>

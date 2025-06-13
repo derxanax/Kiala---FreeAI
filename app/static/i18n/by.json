@@ -12,5 +12,20 @@
   "toast.error": "Памылка аперацыі.",
   "modal.confirmTitle": "Пацверджанне",
   "modal.confirmYes": "Пацвердзіць",
-  "modal.confirmNo": "Скасаваць"
+  "modal.confirmNo": "Скасаваць",
+  "sidebar.profile": "Профіль",
+  "sidebar.settings": "Налады",
+  "sidebar.chat": "Чат",
+  "chat.rename": "Перайменаваць чат",
+  "chat.delete": "Выдаліць чат",
+  "chat.disclaimer": "Kiala можа падаць недакладную інфармацыю. Заўсёды правярайце важныя даныя.",
+  "settings.apiKey": "API-ключ Gemini",
+  "settings.apiKeyPlaceholder": "Увядзіце ваш Google AI API-ключ",
+  "settings.systemPrompt": "Сістэмная інструкцыя (мануал Kiala)",
+  "settings.systemPromptPlaceholder": "Напрыклад: Вы дружалюбны і трохі саркастычны AI-асістэнт.",
+  "settings.saveInstructions": "Захаваць інструкцыю",
+  "settings.clearAllHistory": "Ачысціць УСЮ гісторыю чатаў",
+  "settings.provider": "Пастаўшчык",
+  "common.save": "Захаваць",
+  "common.clearAll": "Ачысціць усё"
 } 
