@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const systemPromptInput = document.getElementById('system-prompt-input');
     const saveSystemPromptButton = document.getElementById('save-system-prompt-btn');
     const clearHistoryAllButton = document.getElementById('clear-history-all-btn');
+    const providerSelect = document.getElementById('provider-select');
 
     // Profile View Elements
     const usernameInput = document.getElementById('username-input');
@@ -61,7 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
         denseMode: false,
         geminiApiKey: '',
         globalSystemPrompt: "You are a polite and friendly assistant to Kiala, who is happy to answer questions asked.",
-        userAvatarInitials: 'You'
+        userAvatarInitials: 'You',
+        provider: 'gemini'
     };
     let isGeminiResponding = false;
     let currentConfirmationAction = null;
@@ -162,6 +164,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (usernameInput) usernameInput.value = userSettings.userAvatarInitials || 'You';
         if (userAvatarPreview) userAvatarPreview.textContent = getAvatarInitials(userSettings.userAvatarInitials || 'You');
+
+        if (providerSelect) providerSelect.value = userSettings.provider || 'gemini';
     }
 
     function setTheme(themeName) {
@@ -286,14 +290,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 .filter(msg => msg.sender !== 'user' || msg.text.trim() !== messageText)
                 .map(msg => ({ sender: msg.sender, text: msg.text }));
 
-            const apiKeyToUse = userSettings.geminiApiKey;
-            const systemPromptToUse = currentChat.systemInstruction || userSettings.globalSystemPrompt;
-
-            if (!apiKeyToUse) {
-                 throw new Error("Gemini API key is not installed. Please add it in Settings.");
+            const provider = userSettings.provider || 'gemini';
+            let botResponseText = '';
+            if (provider === 'gemini') {
+                const apiKeyToUse = userSettings.geminiApiKey;
+                const systemPromptToUse = currentChat.systemInstruction || userSettings.globalSystemPrompt;
+                if (!apiKeyToUse) {
+                    throw new Error("Gemini API key is not installed. Please add it in Settings.");
+                }
+                botResponseText = await fetchGeminiResponse(messageText, historyForApi, apiKeyToUse, systemPromptToUse);
+            } else if (provider === 'qwen') {
+                botResponseText = await fetchQwenResponse(messageText);
+            } else {
+                throw new Error(`Unsupported provider: ${provider}`);
             }
-
-            const botResponseText = await fetchGeminiResponse(messageText, historyForApi, apiKeyToUse, systemPromptToUse);
             addMessageToChat(activeChatId, 'bot', botResponseText);
 
         } catch (error) {
@@ -338,6 +348,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const data = await response.json();
         return data.reply;
+    }
+    
+    async function fetchQwenResponse(message) {
+        const response = await fetch('http://localhost:3700/api/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message })
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: "Failed to get error details from the Qwen server." }));
+            console.error("Error from Qwen API:", response.status, errorData);
+            throw new Error(errorData.error || `The Qwen server responded with an error: ${response.status}`);
+        }
+        const data = await response.json();
+        return data.response || ' '; // Qwen returns field 'response'
     }
     
     function addMessageToChat(chatId, sender, text, prompts = null) {
@@ -994,6 +1021,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 reader.readAsText(file);
             }
+        });
+    }
+
+    if (providerSelect) {
+        providerSelect.addEventListener('change', (e) => {
+            userSettings.provider = e.target.value;
+            saveUserSettingsToLS();
+            showToast(`Provider switched to ${userSettings.provider.toUpperCase()}.`, 'info');
         });
     }
 
